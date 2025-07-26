@@ -70,29 +70,9 @@ def login_required(f):
 # ------------------------ DASHBOARD ------------------------
 @app.route('/')
 @login_required
+@app.route('/')
 def index():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("""
-    SELECT kas.*, members.nama AS nama_member
-    FROM kas
-    LEFT JOIN members ON kas.member_id = members.id
-    ORDER BY kas.tanggal DESC
-    """)
-    kas = cursor.fetchall()
-
-    cursor.execute("SELECT SUM(jumlah) FROM kas WHERE jenis = 'masuk'")
-    total_masuk = cursor.fetchone()['SUM(jumlah)'] or 0
-
-    cursor.execute("SELECT SUM(jumlah) FROM kas WHERE jenis = 'keluar'")
-    total_keluar = cursor.fetchone()['SUM(jumlah)'] or 0
-
-    saldo = total_masuk - total_keluar
-
-    cursor.close()
-    conn.close()
-    return render_template('index.html', kas=kas, saldo=saldo)
+    return "Aplikasi jalan!"
 
 # ---------------------- TAMBAH TRANSAKSI ----------------------
 @app.route('/tambah', methods=['GET', 'POST'])
