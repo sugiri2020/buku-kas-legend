@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Tambah Transaksi{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">➕ Tambah Transaksi Baru</h2>
+
+<!-- FORM POST + FILE -->
+<form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="tanggal" class="form-label">Tanggal</label>
+        <input type="date" class="form-control" name="tanggal" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="member_id" class="form-label">Member</label>
+        <select name="member_id" class="form-select">
+            <option value="">-- Pilih Member --</option>
+            {% for m in members %}
+                <option value="{{ m.id }}">{{ m.nama }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="keterangan" class="form-label">Keterangan</label>
+        <input type="text" class="form-control" name="keterangan" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="jenis" class="form-label">Jenis</label>
+        <select name="jenis" class="form-select" required>
+            <option value="masuk">Masuk</option>
+            <option value="keluar">Keluar</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="jumlah" class="form-label">Jumlah (Rp)</label>
+        <input type="number" step="0.01" class="form-control" name="jumlah" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="bukti_file" class="form-label">Upload Bukti (Opsional)</label>
+        <input type="file" class="form-control" name="bukti_file" accept=".jpg,.jpeg,.png,.pdf">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Simpan</button>
+    <a href="/" class="btn btn-secondary">Batal</a>
+</form>
+
+{% endblock %}

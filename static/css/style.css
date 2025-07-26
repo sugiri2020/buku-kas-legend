@@ -1,0 +1,8 @@
+body.bg-dark .table {
+    color: white;
+}
+
+body.bg-dark .table th,
+body.bg-dark .table td {
+    background-color: #1c1c1c;
+}

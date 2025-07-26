@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Edit Member</h3>
+    <form method="POST">
+        <div class="mb-3">
+            <label>Nama</label>
+            <input type="text" name="nama" class="form-control" value="{{ member.nama }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Kontak</label>
+            <input type="text" name="kontak" class="form-control" value="{{ member.kontak }}">
+        </div>
+        <div class="mb-3">
+            <label>Alamat</label>
+            <textarea name="alamat" class="form-control">{{ member.alamat }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+        <a href="{{ url_for('members') }}" class="btn btn-secondary">Batal</a>
+    </form>
+</div>
+{% endblock %}

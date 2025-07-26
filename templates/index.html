@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard Buku Kas{% endblock %}
+
+{% block content %}
+<!-- Saldo Card -->
+<div class="saldo-card p-4 mb-4 shadow-sm">
+    <h5 class="mb-1">Saldo Saat Ini</h5>
+    <h2>Rp {{ '{:,.0f}'.format(saldo) }}</h2>
+</div>
+
+<!-- Tombol Aksi -->
+<div class="mb-3 d-flex justify-content-between">
+    {% if session['role'] == 'admin' %}
+    <a href="{{ url_for('tambah') }}" class="btn btn-success">+ Tambah Kas</a>
+    {% endif %}
+    <a href="{{ url_for('export_excel') }}" class="btn btn-outline-primary">📤 Export Excel</a>
+</div>
+
+<!-- Tabel Kas -->
+<div class="table-responsive">
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Tanggal</th>
+                <th>Members</th>
+                <th>Keterangan</th>
+                <th>Jenis</th>
+                <th>Jumlah (Rp)</th>
+                <th>Bukti</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for k in kas %}
+            <tr>
+                <td>{{ k['tanggal'] }}</td>
+                <td>{{ k.nama_member or 'Tidak Ada' }}</td>
+                <td>{{ k['keterangan'] }}</td>
+                <td>
+                    <span class="badge {{ 'badge-masuk' if k['jenis'] == 'masuk' else 'badge-keluar' }}">
+                        {{ k['jenis'] }}
+                    </span>
+                </td>
+                <td>Rp {{ '{:,.0f}'.format(k['jumlah']|float) }}</td>
+                                <td>
+                    {% if k.bukti_file %}
+                        <a href="{{ url_for('static', filename='uploads/' ~ k.bukti_file) }}" target="_blank">Lihat</a>
+                    {% else %}
+                        Tidak Ada
+                    {% endif %}
+                </td>
+                <td>
+                    {% if session['role'] == 'admin' %}
+                    <a href="{{ url_for('edit', id=k['id']) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{{ url_for('hapus', id=k['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('Hapus data ini?')">Hapus</a>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

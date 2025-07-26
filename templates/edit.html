@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Edit Transaksi</h3>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="tanggal" class="form-label">Tanggal</label>
+      <input type="date" name="tanggal" class="form-control" value="{{ kas['tanggal'] }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="keterangan" class="form-label">Keterangan</label>
+      <input type="text" name="keterangan" class="form-control" value="{{ kas['keterangan'] }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="jenis" class="form-label">Jenis</label>
+      <select name="jenis" class="form-select" required>
+        <option value="masuk" {% if kas['jenis'] == 'masuk' %}selected{% endif %}>Masuk</option>
+        <option value="keluar" {% if kas['jenis'] == 'keluar' %}selected{% endif %}>Keluar</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="jumlah" class="form-label">Jumlah (Rp)</label>
+      <input type="number" name="jumlah" class="form-control" value="{{ kas['jumlah'] }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="bukti_file" class="form-label">Upload Bukti Baru (Opsional)</label>
+      <input type="file" class="form-control" name="bukti_file" accept=".jpg,.jpeg,.png,.pdf">
+      {% if kas['bukti_file'] %}
+        <div class="mt-2">
+          <small>Bukti saat ini: 
+            <a href="{{ url_for('static', filename='uploads/' ~ kas['bukti_file']) }}" target="_blank">
+              {{ kas['bukti_file'] }}
+            </a>
+          </small>
+        </div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Batal</a>
+  </form>
+</div>
+{% endblock %}

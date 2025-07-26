@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Daftar Member</h3>
+    <form action="{{ url_for('add_member') }}" method="POST" class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="nama" class="form-control" placeholder="Nama" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="kontak" class="form-control" placeholder="Kontak">
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="alamat" class="form-control" placeholder="Alamat">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Tambah</button>
+            </div>
+        </div>
+    </form>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>No</th>
+                <th>Nama</th>
+                <th>Kontak</th>
+                <th>Alamat</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ member.nama }}</td>
+                <td>{{ member.kontak }}</td>
+                <td>{{ member.alamat }}</td>
+                <td>
+                    <a href="{{ url_for('edit_member', id=member.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{{ url_for('delete_member', id=member.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin hapus?')">Hapus</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

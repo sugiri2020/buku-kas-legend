@@ -1,0 +1,191 @@
+<!-- templates/layout.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Buku Kas{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+<style>
+        /* Badge untuk jenis kas */
+    .badge {
+        display: inline-block;
+        padding: 0.4em 0.6em;
+        font-size: 0.8em;
+        font-weight: bold;
+        border-radius: 5px;
+        color: #fff;
+    }
+
+    .badge-masuk {
+        background-color: #28a745; /* hijau */
+    }
+
+    .badge-keluar {
+        background-color: #dc3545; /* merah */
+    }
+
+    /* Dark mode tambahan jika perlu */
+    .dark-mode .badge {
+        color: #fff;
+    }
+
+    /* Reset dasar */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 240px;
+        background-color: #343a40;
+        color: white;
+        padding-top: 1rem;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .sidebar a {
+        display: block;
+        color: white;
+        padding: 12px 20px;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+        background-color: #495057;
+        border-radius: 4px;
+    }
+
+    /* Konten utama */
+    .main-content {
+        margin-left: 240px;
+        padding: 2rem;
+        flex: 1;
+        background-color: #f8f9fa;
+        transition: background-color 0.3s;
+    }
+
+    /* Topbar (jika ada) */
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .logout-btn {
+        font-size: 0.9rem;
+    }
+
+    /* Dark mode */
+    body.dark-mode {
+        background-color: #121212;
+        color: white;
+    }
+
+    .dark-mode .main-content {
+        background-color: #1e1e1e;
+        color: white;
+    }
+
+    .dark-mode .sidebar {
+        background-color: #1c1c1c;
+    }
+
+    .dark-mode .sidebar a {
+        color: #ddd;
+    }
+
+    .dark-mode .sidebar a:hover,
+    .dark-mode .sidebar a.active {
+        background-color: #333;
+    }
+
+    /* Responsif (opsional) */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 200px;
+        }
+
+        .main-content {
+            margin-left: 200px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .sidebar {
+            position: absolute;
+            left: -240px;
+            transition: left 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.show {
+            left: 0;
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+    }
+</style>
+
+
+</head>
+<body id="body" class="{% if session.get('dark_mode') %}dark-mode{% endif %}">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h5 class="text-center mb-4">📒 Buku Kas Legend</h5>
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}">🏠 Dashboard</a>
+        <a href="/" class="{% if '/kas' in request.path %}active{% endif %}">💸 Data Kas</a>
+        <a href="/members" class="{% if '/members' in request.path %}active{% endif %}">👥 Data Member</a>
+        <a href="/tambah" class="{% if '/tambah' in request.path %}active{% endif %}">➕ Tambah Transaksi</a>
+        <a href="#" onclick="toggleDarkMode()">🌙 Dark Mode</a>
+        {% if session.get('logged_in') %}
+        <a href="{{ url_for('logout') }}">🚪 Logout</a>
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar mb-3">
+            <div>
+                {% if session.get('logged_in') %}
+                    <strong>Halo, {{ session.username }}</strong>
+                {% endif %}
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="alert alert-info">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+    </script>
+</body>
+</html>
