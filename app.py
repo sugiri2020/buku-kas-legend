@@ -14,7 +14,8 @@ load_dotenv()
 
 # Flask App Config
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
+app.secret_key = os.environ.get("SECRET_KEY", "default_secret")
+
 
 # Upload config
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -62,6 +63,7 @@ def login():
         else:
             error = 'Username atau password salah'
     return render_template('login.html', error=error)
+
 
 # ------------------------- LOGIN REQUIRED DECORATOR -------------------------
 def login_required(f):
