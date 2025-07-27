@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, redirect, url_for, send_file,
 from werkzeug.utils import secure_filename
 from openpyxl import Workbook
 from datetime import datetime
-from functools import wraps
 from dotenv import load_dotenv
 import os
 import mysql.connector
@@ -15,7 +14,6 @@ load_dotenv()
 # Flask App Config
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "defaultkey")
-
 
 # Upload config
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -36,31 +34,8 @@ def get_db_connection():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ------------------------- LOGIN -------------------------
-# @app.before_request
-# def require_login():
-#     allowed_routes = ['login', 'static']
-#     if 'user_id' not in session and request.endpoint not in allowed_routes:
-#         print("🔒 Akses ditolak: belum login.")
-#         return redirect('/login')
-
-
-
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
-            print("🔒 Akses ditolak: belum login.")
-            return redirect(url_for('login'))
-        print(f"✅ Akses diizinkan untuk: {session.get('username')}")
-        return f(*args, **kwargs)
-    return decorated_function
-
-
 # ------------------------- DASHBOARD -------------------------
 @app.route('/')
-@login_required
 def index():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -87,7 +62,6 @@ def index():
 
 # ------------------------- TAMBAH TRANSAKSI -------------------------
 @app.route('/tambah', methods=['GET', 'POST'])
-@login_required
 def tambah():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -123,7 +97,6 @@ def tambah():
 
 # ------------------------- EKSPOR EXCEL -------------------------
 @app.route('/export_excel')
-@login_required
 def export_excel():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -146,11 +119,7 @@ def export_excel():
 
 # ------------------------- EDIT TRANSAKSI -------------------------
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
 def edit(id):
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -173,10 +142,7 @@ def edit(id):
 
 # ------------------------- HAPUS TRANSAKSI -------------------------
 @app.route('/hapus/<int:id>')
-@login_required
 def hapus(id):
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM kas WHERE id = %s", (id,))
@@ -188,7 +154,6 @@ def hapus(id):
 
 # ------------------------- MEMBER ROUTES -------------------------
 @app.route('/members')
-@login_required
 def members():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -199,7 +164,6 @@ def members():
     return render_template('member/member.html', members=members)
 
 @app.route('/add_member', methods=['POST'])
-@login_required
 def add_member():
     nama = request.form['nama']
     kontak = request.form['kontak']
@@ -213,7 +177,6 @@ def add_member():
     return redirect('/members')
 
 @app.route('/edit_member/<int:id>', methods=['GET', 'POST'])
-@login_required
 def edit_member(id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -234,7 +197,6 @@ def edit_member(id):
         return render_template('member/edit_member.html', member=member)
 
 @app.route('/delete_member/<int:id>')
-@login_required
 def delete_member(id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -244,11 +206,40 @@ def delete_member(id):
     conn.close()
     return redirect('/members')
 
+# ------------------------- LOGIN -------------------------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, hashed_password))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if user:
+            session['logged_in'] = True
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            flash('Berhasil login.', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Login gagal. Periksa username dan password Anda.', 'danger')
+            return redirect(url_for('login'))
+    
+    return render_template('login.html')
+
+
 # ------------------------- LOGOUT -------------------------
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 # ------------------------- RUN -------------------------
 if __name__ == '__main__':
