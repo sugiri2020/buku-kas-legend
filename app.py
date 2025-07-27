@@ -39,34 +39,28 @@ def allowed_file(filename):
 # ------------------------- LOGIN -------------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
     if request.method == 'POST':
+        print("Form login diproses...")  # ⬅️ Disimpan di sini untuk debug
+
         username = request.form['username']
-        password = hashlib.md5(request.form['password'].encode()).hexdigest()
-        print(f"[LOGIN ATTEMPT] Username: {username} | Password MD5: {password}")
+        password = request.form['password']
 
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
-            user = cursor.fetchone()
-            print(f"[DB RESULT] {user}")
-            cursor.close()
-            conn.close()
-        except Exception as e:
-            error = f"Database error: {e}"
-            return render_template('login.html', error=error)
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
 
-        if user:
+        if user and check_password_hash(user['password'], password):
             session['logged_in'] = True
             session['username'] = user['username']
             session['role'] = user['role']
-            print("[LOGIN SUCCESS] Redirecting to index")
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
         else:
-            error = 'Username atau password salah'
-            print("[LOGIN FAILED] Invalid credentials")
-    return render_template('login.html', error=error)
+            error = "Username atau password salah"
+            return render_template('login.html', error=error)
+
+    return render_template('login.html')
+
 
 
 def login_required(f):
