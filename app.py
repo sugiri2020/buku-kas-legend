@@ -37,29 +37,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ------------------------- LOGIN -------------------------
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        print("Form login diproses...")  # ⬅️ Disimpan di sini untuk debug
-
-        username = request.form['username']
-        password = request.form['password']
-
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
-        user = cur.fetchone()
-        cur.close()
-
-        if user and check_password_hash(user['password'], password):
-            session['logged_in'] = True
-            session['username'] = user['username']
-            session['role'] = user['role']
-            return redirect(url_for('dashboard'))
-        else:
-            error = "Username atau password salah"
-            return render_template('login.html', error=error)
-
-    return render_template('login.html')
+@app.route('/')
+def index():
+    # sementara disable login
+    # if 'username' not in session:
+    #     return redirect('/login')
+    return render_template('index.html')
 
 
 
