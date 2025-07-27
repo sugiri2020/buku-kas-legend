@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
 from werkzeug.utils import secure_filename
 from openpyxl import Workbook
@@ -265,5 +266,4 @@ def logout():
 
 # ------------------------- RUN -------------------------
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

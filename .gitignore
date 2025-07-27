@@ -1,0 +1,22 @@
+# File Python cache
+__pycache__/
+*.pyc
+
+# File lingkungan rahasia
+.env
+
+# File log / laporan
+laporan/
+
+# File upload bukti
+static/uploads/
+
+# Virtual environment (jika pakai venv)
+venv/
+.env/
+
+# Database dump
+*.sql
+
+# File Excel yang diekspor
+*.xlsx
