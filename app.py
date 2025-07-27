@@ -37,12 +37,13 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ------------------------- LOGIN -------------------------
-@app.route('/')
-def index():
-    # sementara disable login
-    # if 'username' not in session:
-    #     return redirect('/login')
-    return render_template('index.html')
+# @app.before_request
+# def require_login():
+#     allowed_routes = ['login', 'static']
+#     if 'user_id' not in session and request.endpoint not in allowed_routes:
+#         print("🔒 Akses ditolak: belum login.")
+#         return redirect('/login')
+
 
 
 
