@@ -14,7 +14,7 @@ load_dotenv()
 
 # Flask App Config
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "super-secret-default")
+app.secret_key = os.environ.get("SECRET_KEY", "defaultkey")
 
 
 # Upload config
@@ -43,12 +43,14 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = hashlib.md5(request.form['password'].encode()).hexdigest()
+        print(f"[LOGIN ATTEMPT] Username: {username} | Password MD5: {password}")
 
         try:
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
             user = cursor.fetchone()
+            print(f"[DB RESULT] {user}")
             cursor.close()
             conn.close()
         except Exception as e:
@@ -59,9 +61,11 @@ def login():
             session['logged_in'] = True
             session['username'] = user['username']
             session['role'] = user['role']
+            print("[LOGIN SUCCESS] Redirecting to index")
             return redirect(url_for('index'))
         else:
             error = 'Username atau password salah'
+            print("[LOGIN FAILED] Invalid credentials")
     return render_template('login.html', error=error)
 
 
