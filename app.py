@@ -65,14 +65,16 @@ def login():
     return render_template('login.html', error=error)
 
 
-# ------------------------- LOGIN REQUIRED DECORATOR -------------------------
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'logged_in' not in session:
+            print("🔒 Akses ditolak: belum login.")
             return redirect(url_for('login'))
+        print(f"✅ Akses diizinkan untuk: {session.get('username')}")
         return f(*args, **kwargs)
     return decorated_function
+
 
 # ------------------------- DASHBOARD -------------------------
 @app.route('/')
