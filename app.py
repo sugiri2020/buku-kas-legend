@@ -14,7 +14,7 @@ load_dotenv()
 
 # Flask App Config
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "default_secret")
+app.secret_key = os.getenv("SECRET_KEY", "super-secret-default")
 
 
 # Upload config
