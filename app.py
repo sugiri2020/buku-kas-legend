@@ -1,36 +1,35 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
-import mysql.connector
-import hashlib
+from werkzeug.utils import secure_filename
 from openpyxl import Workbook
 from datetime import datetime
 from functools import wraps
-from urllib.parse import urlparse
+from dotenv import load_dotenv
 import os
-from werkzeug.utils import secure_filename
+import mysql.connector
+import hashlib
 
-# Konfigurasi Flask
+# Load environment
+load_dotenv()
+
+# Flask App Config
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 
-# Fungsi koneksi database (Railway menggunakan DATABASE_URL)
-def get_db_connection():
-    db_url = os.environ.get('DATABASE_URL')
-    if not db_url:
-        raise Exception("DATABASE_URL tidak ditemukan di environment variables.")
-    
-    result = urlparse(db_url)
-    return mysql.connector.connect(
-        host=result.hostname,
-        user=result.username,
-        password=result.password,
-        database=result.path.lstrip('/'),
-        port=result.port
-    )
-
-# Konfigurasi upload
+# Upload config
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# DB connection
+def get_db_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME"),
+        port=int(os.getenv("DB_PORT", 3306))
+    )
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -42,12 +41,17 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = hashlib.md5(request.form['password'].encode()).hexdigest()
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
+            user = cursor.fetchone()
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            error = f"Database error: {e}"
+            return render_template('login.html', error=error)
 
         if user:
             session['logged_in'] = True
@@ -58,7 +62,7 @@ def login():
             error = 'Username atau password salah'
     return render_template('login.html', error=error)
 
-# --------------------- AUTH DECORATOR ---------------------
+# ------------------------- LOGIN REQUIRED DECORATOR -------------------------
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -67,14 +71,34 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ------------------------ DASHBOARD ------------------------
+# ------------------------- DASHBOARD -------------------------
 @app.route('/')
 @login_required
-@app.route('/')
 def index():
-    return "Aplikasi jalan!"
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-# ---------------------- TAMBAH TRANSAKSI ----------------------
+    cursor.execute("""
+        SELECT kas.*, members.nama AS nama_member
+        FROM kas
+        LEFT JOIN members ON kas.member_id = members.id
+        ORDER BY kas.tanggal DESC
+    """)
+    kas = cursor.fetchall()
+
+    cursor.execute("SELECT SUM(jumlah) FROM kas WHERE jenis = 'masuk'")
+    total_masuk = cursor.fetchone()['SUM(jumlah)'] or 0
+
+    cursor.execute("SELECT SUM(jumlah) FROM kas WHERE jenis = 'keluar'")
+    total_keluar = cursor.fetchone()['SUM(jumlah)'] or 0
+
+    saldo = total_masuk - total_keluar
+
+    cursor.close()
+    conn.close()
+    return render_template('index.html', kas=kas, saldo=saldo)
+
+# ------------------------- TAMBAH TRANSAKSI -------------------------
 @app.route('/tambah', methods=['GET', 'POST'])
 @login_required
 def tambah():
@@ -110,7 +134,7 @@ def tambah():
         conn.close()
         return render_template("tambah.html", members=members)
 
-# ---------------------- EKSPOR EXCEL ----------------------
+# ------------------------- EKSPOR EXCEL -------------------------
 @app.route('/export_excel')
 @login_required
 def export_excel():
@@ -125,8 +149,7 @@ def export_excel():
     for row in data:
         ws.append(row)
 
-    if not os.path.exists('laporan'):
-        os.makedirs('laporan')
+    os.makedirs('laporan', exist_ok=True)
     filename = f"laporan/Laporan_Buku_Kas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     wb.save(filename)
 
@@ -134,7 +157,7 @@ def export_excel():
     conn.close()
     return send_file(filename, as_attachment=True)
 
-# ---------------------- EDIT TRANSAKSI ----------------------
+# ------------------------- EDIT TRANSAKSI -------------------------
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit(id):
@@ -143,6 +166,7 @@ def edit(id):
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+
     if request.method == 'POST':
         tanggal = request.form['tanggal']
         keterangan = request.form['keterangan']
@@ -153,13 +177,14 @@ def edit(id):
         conn.commit()
         flash('Kas berhasil diperbarui.', 'success')
         return redirect(url_for('index'))
+
     cursor.execute("SELECT * FROM kas WHERE id = %s", (id,))
     kas = cursor.fetchone()
     cursor.close()
     conn.close()
     return render_template('edit.html', kas=kas)
 
-# ---------------------- HAPUS TRANSAKSI ----------------------
+# ------------------------- HAPUS TRANSAKSI -------------------------
 @app.route('/hapus/<int:id>')
 @login_required
 def hapus(id):
@@ -174,7 +199,7 @@ def hapus(id):
     flash('Kas berhasil dihapus.', 'danger')
     return redirect(url_for('index'))
 
-# ---------------------- MEMBER ROUTES ----------------------
+# ------------------------- MEMBER ROUTES -------------------------
 @app.route('/members')
 @login_required
 def members():
@@ -232,12 +257,13 @@ def delete_member(id):
     conn.close()
     return redirect('/members')
 
-# ---------------------- LOGOUT ----------------------
+# ------------------------- LOGOUT -------------------------
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ---------------------- RUN ----------------------
-
-
+# ------------------------- RUN -------------------------
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
